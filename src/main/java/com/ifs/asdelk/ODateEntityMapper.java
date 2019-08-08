@@ -20,22 +20,26 @@ public class ODateEntityMapper {
 
         for (ClientProperty cp : clientEntity.getProperties()) {
             String fieldName = cp.getName();
-            ClientPrimitiveValue primitiveValue = cp.getPrimitiveValue();
             String setterMethodName = "set".concat(fieldName);
+            if (cp.hasPrimitiveValue()) {
+                ClientPrimitiveValue primitiveValue = cp.getPrimitiveValue();
 
-            //TODO Add Validation for column type mismatch
+                //TODO Add Validation for column type mismatch
 
-            if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Boolean) {
-                ODateEntityMapper.methodInvoker(entityClass, setterMethodName, Boolean.class, cp.getPrimitiveValue().toCastValue(Boolean.class), object);
-            } else if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.String) {
-                ODateEntityMapper.methodInvoker(entityClass, setterMethodName, String.class, cp.getPrimitiveValue().toCastValue(String.class), object);
-            } else if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.DateTimeOffset) {
-                ODateEntityMapper.methodInvoker(entityClass, setterMethodName, LocalDateTime.class, cp.getPrimitiveValue().toCastValue(LocalDateTime.class), object);
-            } else if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Int16 || primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Int32) {
-                ODateEntityMapper.methodInvoker(entityClass, setterMethodName, Integer.class, cp.getPrimitiveValue().toCastValue(Integer.class), object);
-            } else if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Int64 || primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Decimal ||
-                    primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Double) {
-                ODateEntityMapper.methodInvoker(entityClass, setterMethodName, Double.class, cp.getPrimitiveValue().toCastValue(Double.class), object);
+                if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Boolean) {
+                    ODateEntityMapper.methodInvoker(entityClass, setterMethodName, Boolean.class, cp.getPrimitiveValue().toCastValue(Boolean.class), object);
+                } else if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.String) {
+                    ODateEntityMapper.methodInvoker(entityClass, setterMethodName, String.class, cp.getPrimitiveValue().toCastValue(String.class), object);
+                } else if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.DateTimeOffset) {
+                    ODateEntityMapper.methodInvoker(entityClass, setterMethodName, LocalDateTime.class, cp.getPrimitiveValue().toCastValue(LocalDateTime.class), object);
+                } else if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Int16 || primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Int32) {
+                    ODateEntityMapper.methodInvoker(entityClass, setterMethodName, Integer.class, cp.getPrimitiveValue().toCastValue(Integer.class), object);
+                } else if (primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Int64 || primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Decimal ||
+                        primitiveValue.getTypeKind() == EdmPrimitiveTypeKind.Double) {
+                    ODateEntityMapper.methodInvoker(entityClass, setterMethodName, Double.class, cp.getPrimitiveValue().toCastValue(Double.class), object);
+                }
+            } else if (cp.hasEnumValue()) {
+                ODateEntityMapper.methodInvoker(entityClass, setterMethodName, String.class, cp.getEnumValue().getValue(), object);
             }
 
         }
