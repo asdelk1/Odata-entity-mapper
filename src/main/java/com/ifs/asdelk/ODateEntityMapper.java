@@ -53,7 +53,6 @@ public class ODateEntityMapper {
             String fieldName = field.getName();
             String ODataFieldName = fieldName.substring(0, 1).toUpperCase().concat(fieldName.substring(1));
             String getterMethodName = "get".concat(ODataFieldName);
-            Class[] getterParams = new Class[1];
             Method getterMethod = entityClass.getDeclaredMethod(getterMethodName);
             Object fieldValue = getterMethod.invoke(entity);
             if (fieldValue != null) {
@@ -70,7 +69,7 @@ public class ODateEntityMapper {
                 else if(fieldValue.getClass() == LocalDateTime.class){
                     LocalDateTime dateTimeValue = (LocalDateTime) fieldValue;
                     cp = clientObjectFactory.newPrimitiveProperty(ODataFieldName,
-                            clientObjectFactory.newPrimitiveValueBuilder().buildString((String) fieldValue.toString()));
+                            clientObjectFactory.newPrimitiveValueBuilder().buildString(dateTimeValue.toString()));
                 }
                 if(cp != null){
                     ce.getProperties().add(cp);
