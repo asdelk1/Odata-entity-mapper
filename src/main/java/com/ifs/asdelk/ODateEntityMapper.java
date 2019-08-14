@@ -5,13 +5,15 @@ import org.apache.olingo.client.api.domain.ClientEntity;
 import org.apache.olingo.client.api.domain.ClientObjectFactory;
 import org.apache.olingo.client.api.domain.ClientPrimitiveValue;
 import org.apache.olingo.client.api.domain.ClientProperty;
+import org.apache.olingo.commons.api.edm.EdmEntityType;
+import org.apache.olingo.commons.api.edm.EdmKeyPropertyRef;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeException;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ODateEntityMapper {
 
@@ -46,32 +48,39 @@ public class ODateEntityMapper {
         return object;
     }
 
-    public static <E> void writeToClient(ODataClient client, ClientEntity ce, E entity) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static <E> void writeToClient(ODataClient client, EdmEntityType edmEntityType, ClientEntity ce, E entity, boolean skipKeys) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Class<?> entityClass = entity.getClass();
         ClientObjectFactory clientObjectFactory = client.getObjectFactory();
-        for (Field field : entityClass.getDeclaredFields()) {
-            String fieldName = field.getName();
-            String ODataFieldName = fieldName.substring(0, 1).toUpperCase().concat(fieldName.substring(1));
-            String getterMethodName = "get".concat(ODataFieldName);
-            Method getterMethod = entityClass.getDeclaredMethod(getterMethodName);
+        for (String propertyName : edmEntityType.getPropertyNames()) {
+//            Need to keep this until the implementation of the fields validation with EDM
+//            Field field = entityClass.getField(propertyName.substring(0, 1).toLowerCase().concat(propertyName.substring(1)));
+
+            if (skipKeys) {
+                List<EdmKeyPropertyRef> keys = edmEntityType.getKeyPropertyRefs();
+                if (keys.stream().anyMatch((EdmKeyPropertyRef key) -> key.getName().equals(propertyName))) {
+                    continue;
+                }
+            }
+
+            Method getterMethod = entityClass.getDeclaredMethod("get".concat(propertyName));
             Object fieldValue = getterMethod.invoke(entity);
             if (fieldValue != null) {
                 ClientProperty cp = null;
                 if (fieldValue.getClass() == String.class) {
-                    cp = clientObjectFactory.newPrimitiveProperty(ODataFieldName,
+                    cp = clientObjectFactory.newPrimitiveProperty(propertyName,
                             clientObjectFactory.newPrimitiveValueBuilder().buildString((String) fieldValue));
-                }else if(fieldValue.getClass() == Integer.class) {
-                    cp = clientObjectFactory.newPrimitiveProperty(ODataFieldName,
+                } else if (fieldValue.getClass() == Integer.class) {
+                    cp = clientObjectFactory.newPrimitiveProperty(propertyName,
                             clientObjectFactory.newPrimitiveValueBuilder().buildInt32((Integer) fieldValue));
-                }else if(fieldValue.getClass() == Double.class)
-                    cp = clientObjectFactory.newPrimitiveProperty(ODataFieldName,
+                } else if (fieldValue.getClass() == Double.class)
+                    cp = clientObjectFactory.newPrimitiveProperty(propertyName,
                             clientObjectFactory.newPrimitiveValueBuilder().buildDouble((Double) fieldValue));
-                else if(fieldValue.getClass() == LocalDateTime.class){
+                else if (fieldValue.getClass() == LocalDateTime.class) {
                     LocalDateTime dateTimeValue = (LocalDateTime) fieldValue;
-                    cp = clientObjectFactory.newPrimitiveProperty(ODataFieldName,
+                    cp = clientObjectFactory.newPrimitiveProperty(propertyName,
                             clientObjectFactory.newPrimitiveValueBuilder().buildString(dateTimeValue.toString()));
                 }
-                if(cp != null){
+                if (cp != null) {
                     ce.getProperties().add(cp);
                 }
             }
